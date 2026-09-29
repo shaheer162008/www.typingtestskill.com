@@ -535,15 +535,14 @@ export default function AdminDashboard() {
 
               {/* User List */}
               <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
-                <div className="grid grid-cols-[1fr_1fr_100px_100px] gap-4 px-6 py-3 border-b border-white/[0.06] text-[11px] text-primary/30 uppercase tracking-[0.1em] font-medium">
+                <div className="grid grid-cols-[1fr_1fr_120px] gap-4 px-6 py-3 border-b border-white/[0.06] text-[11px] text-primary/30 uppercase tracking-[0.1em] font-medium">
                   <span>User</span>
                   <span>Email</span>
-                  <span>Joined</span>
                   <span className="text-right">Role</span>
                 </div>
                 <div className="divide-y divide-white/[0.03]">
                   {filteredUsers.map((record) => (
-                    <div key={record.id} className="grid grid-cols-[1fr_1fr_100px_100px] gap-4 items-center px-6 py-3.5 hover:bg-white/[0.02] transition-colors">
+                    <div key={record.id} className="grid grid-cols-[1fr_1fr_120px] gap-4 items-center px-6 py-3.5 hover:bg-white/[0.02] transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-white/[0.08] to-white/[0.02] flex items-center justify-center text-primary/60 text-[11px] font-bold overflow-hidden shrink-0 ring-1 ring-white/[0.06]">
                           {record.photoURL ? <Image src={record.photoURL} alt="" width={32} height={32} className="w-full h-full object-cover" /> : (record.name ? record.name.charAt(0).toUpperCase() : "U")}
@@ -551,7 +550,6 @@ export default function AdminDashboard() {
                         <span className="text-[13px] font-medium text-white truncate">{record.name || "Unnamed User"}</span>
                       </div>
                       <span className="text-[13px] text-primary/45 truncate">{record.email}</span>
-                      <span className="text-[12px] text-primary/30">{record.createdAt ? new Date(record.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</span>
                       <div className="text-right">
                         {isSuperAdmin ? (
                           <div className="w-24 ml-auto">
@@ -560,13 +558,13 @@ export default function AdminDashboard() {
                               onChange={(v) => changeRole(record, v)} 
                               options={[
                                 { label: "User", value: "user" },
-                                { label: "Admin", value: "admin" }
+                                { label: "Super Admin", value: "super_admin" }
                               ]} 
                             />
                           </div>
                         ) : (
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${record.role === "admin" || record.role === "super_admin" ? "bg-primary/10 text-primary" : "bg-white/[0.04] text-primary/40"}`}>
-                            {(record.role || "user").charAt(0).toUpperCase() + (record.role || "user").slice(1)}
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${record.role === "super_admin" ? "bg-primary/10 text-primary" : "bg-white/[0.04] text-primary/40"}`}>
+                            {record.role === "super_admin" ? "Super Admin" : "User"}
                           </span>
                         )}
                       </div>

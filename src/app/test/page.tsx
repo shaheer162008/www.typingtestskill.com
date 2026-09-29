@@ -10,7 +10,7 @@ export default async function TestPage({ searchParams }: TestPageProps) {
   const minutes = Number(duration);
   const words = Number(wordCount);
 
-  if (mode === "words" && [25, 50, 75, 100].includes(words)) {
+  if (mode === "words" && [25, 50, 75, 100, 125, 150].includes(words)) {
     return <TypingTestPage mode="words" wordCount={words} lessonId={lesson} difficulty={difficulty} />;
   }
 

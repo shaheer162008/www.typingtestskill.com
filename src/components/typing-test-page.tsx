@@ -6,6 +6,7 @@ import { getDifficultyLabel, normalizeDifficulty, type DifficultyLevel, type Typ
 import { getTargetText } from "@/lib/typing-passage";
 import { useAuth } from "@/components/auth-provider";
 import { useFirestoreLessons } from "@/lib/firestore-lessons";
+import { useRouter } from "next/navigation";
 import ResultModal from "@/components/result-modal";
 
 const keyboardRows = [
@@ -41,6 +42,7 @@ export default function TypingTestPage({ mode, durationMinutes, wordCount, lesso
   const sessionRef = useRef<{ sessionId: string; nonce: string } | null>(null);
   const telemetryRef = useRef<Array<{ key: string; at: number }>>([]);
   const { user } = useAuth();
+  const router = useRouter();
   const normalizedDifficulty: DifficultyLevel = normalizeDifficulty(difficulty);
   const categoryId = mode === "words" ? `words-${wordCount}` : `${mode === "practice" ? "practice" : "timed"}-${durationMinutes}-minute`;
   const { lessons: firestoreLessons } = useFirestoreLessons(categoryId);
@@ -287,7 +289,7 @@ export default function TypingTestPage({ mode, durationMinutes, wordCount, lesso
             wordCount={wordCount}
             difficulty={normalizedDifficulty}
             completedAt={new Date()}
-            onClose={() => setShowResultModal(false)}
+            onClose={() => router.push(mode === "words" ? `/word-typing/${wordCount}` : mode === "test" ? `/typing-test/${normalizedDifficulty}` : `/typing-practice/${normalizedDifficulty}`)}
             onRetry={resetTest}
           />
         )}

@@ -44,7 +44,7 @@ export function getDurationHref(mode: Exclude<TypingMode, "words">, duration: nu
 }
 
 export function getWordHref(count: number, difficulty: DifficultyLevel = "medium") {
-  const base = `/word-typing-test/${count}-words`;
+  const base = `/word-typing/${count}`;
   return difficulty === "medium" ? base : `${base}?difficulty=${difficulty}`;
 }
 

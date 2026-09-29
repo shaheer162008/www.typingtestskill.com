@@ -5,7 +5,7 @@ const siteUrl = "https://typingtestskill.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const staticRoutes = ["", "/typing-test", "/typing-practice", "/word-typing-test", "/about", "/blogs", "/contact"];
+  const staticRoutes = ["", "/typing-test", "/typing-practice", "/word-typing", "/about", "/blogs", "/contact"];
   const timedRoutes = durations.flatMap((duration) => [
     getDurationHref("test", duration),
     getDurationHref("practice", duration),

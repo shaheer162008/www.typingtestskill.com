@@ -11,9 +11,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ui
     if (!isSuperAdmin) return Response.json({ error: "Super admin access required." }, { status: 403 });
     const { uid } = await params;
     const body = await request.json() as { role?: string };
-    if (body.role !== "admin" && body.role !== "user") return Response.json({ error: "Role must be admin or user." }, { status: 400 });
+    if (body.role !== "super_admin" && body.role !== "user") return Response.json({ error: "Role must be super_admin or user." }, { status: 400 });
     const target = await getAdminAuth().getUser(uid);
-    await getAdminAuth().setCustomUserClaims(uid, { ...target.customClaims, admin: body.role === "admin", role: body.role });
+    const grantSuperAdmin = body.role === "super_admin";
+    await getAdminAuth().setCustomUserClaims(uid, { ...target.customClaims, admin: grantSuperAdmin, superAdmin: grantSuperAdmin, role: body.role });
     await getAdminDb().collection("users").doc(uid).set({ role: body.role, updatedAt: Date.now() }, { merge: true });
     return Response.json({ ok: true, uid, role: body.role });
   } catch (error) {

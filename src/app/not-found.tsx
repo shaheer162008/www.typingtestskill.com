@@ -40,7 +40,7 @@ export default function NotFound() {
                 Typing practice
                 <ArrowLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </Link>
-              <Link href="/word-typing-test" className="group flex items-center justify-between border-b border-primary/10 py-4 text-sm transition-colors hover:text-primary/70">
+              <Link href="/word-typing" className="group flex items-center justify-between border-b border-primary/10 py-4 text-sm transition-colors hover:text-primary/70">
                 Word typing test
                 <ArrowLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </Link>

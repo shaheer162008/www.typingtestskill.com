@@ -12,6 +12,8 @@ export type FirestoreLesson = {
   createdAt?: number;
   title: string;
   text: string;
+  focus?: string | null;
+  order?: number | null;
 };
 
 export function useFirestoreLessons(categoryId: string) {

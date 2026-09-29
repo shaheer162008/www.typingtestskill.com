@@ -32,7 +32,7 @@ const paths = [
     title: "Word Typing",
     description: "Challenge yourself with word-based tests where every keystroke counts.",
     options: ["25", "50", "75", "100 words"],
-    href: "/word-typing-test",
+    href: "/word-typing",
     icon: Type,
     accent: "border border-primary/20 bg-white/5 text-primary",
   },
