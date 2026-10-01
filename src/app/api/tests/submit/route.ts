@@ -44,8 +44,25 @@ function calculateResult(session: TestSession, events: KeyEvent[]) {
   }
 
   const text = typed.join("");
-  const elapsedMs = Math.max(1, events.at(-1)!.at - events[0].at);
-  const correctChars = text.split("").reduce((total, char, index) => total + (char === session.targetText[index] ? 1 : 0), 0);
+  let elapsedMs = Math.max(1, events.at(-1)!.at - events[0].at);
+  if (session.durationMinutes && session.mode !== "words" && text.length < session.targetText.length) {
+    elapsedMs = session.durationMinutes * 60000;
+  }
+  
+  const typedWords = text.split(" ");
+  const expectedWords = session.targetText.split(" ");
+  let correctChars = 0;
+  for (let i = 0; i < typedWords.length; i++) {
+    const typedWord = typedWords[i];
+    const expectedWord = expectedWords[i] || "";
+    const maxLength = Math.max(typedWord.length, expectedWord.length);
+    for (let j = 0; j < maxLength; j++) {
+      if (j < typedWord.length && typedWord[j] === expectedWord[j]) {
+        correctChars++;
+      }
+    }
+    if (i < typedWords.length - 1) correctChars++;
+  }
   const incorrectChars = Math.max(0, text.length - correctChars);
   const minutes = elapsedMs / 60000;
   const rawWpm = Math.round((text.length / 5) / minutes);
@@ -53,8 +70,8 @@ function calculateResult(session: TestSession, events: KeyEvent[]) {
   const cpm = Math.round(text.length / minutes);
   const accuracy = text.length ? Math.round((correctChars / text.length) * 100) : 0;
   const wordResults = text.trim() ? text.trim().split(/\s+/) : [];
-  const targetWords = session.targetText.trim().split(/\s+/);
-  const correctWords = wordResults.reduce((total, word, index) => total + (word === targetWords[index] ? 1 : 0), 0);
+  const targetWordList = session.targetText.trim().split(/\s+/);
+  const correctWords = wordResults.reduce((total, word, index) => total + (word === targetWordList[index] ? 1 : 0), 0);
   const speedValues = [...secondBuckets.values()];
   const mean = speedValues.length ? speedValues.reduce((sum, value) => sum + value, 0) / speedValues.length : 0;
   const variance = speedValues.length ? speedValues.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / speedValues.length : 0;
@@ -68,7 +85,7 @@ function calculateResult(session: TestSession, events: KeyEvent[]) {
     cpm,
     accuracy,
     correctWords,
-    incorrectWords: Math.max(0, targetWords.length - correctWords),
+    incorrectWords: Math.max(0, targetWordList.length - correctWords),
     consistency,
     backspaceCount,
     mistakes,
@@ -106,9 +123,9 @@ export async function POST(request: Request) {
       const criteriaSnapshot = await getAdminDb().collection("settings").doc("certificateCriteria").get();
       const criteria = criteriaSnapshot.data() as { minRawWpm?: number; minAccuracy?: number; eligibleModes?: string[] } | undefined;
       const eligibleModes = criteria?.eligibleModes ?? ["test", "words"];
-      if (eligibleModes.includes(session.mode) && result.rawWpm >= (criteria?.minRawWpm ?? 0) && result.accuracy >= (criteria?.minAccuracy ?? 95)) {
+      if (eligibleModes.includes(session.mode) && result.netWpm >= (criteria?.minRawWpm ?? 0) && result.accuracy >= (criteria?.minAccuracy ?? 90)) {
         const profile = await getAdminAuth().getUser(user.uid);
-        const tier = getCertificateTier(result.rawWpm);
+        const tier = getCertificateTier(result.netWpm);
         certificateId = `TTS-${randomUUID().replaceAll("-", "").slice(0, 16).toUpperCase()}`;
         await getAdminDb().collection("certificates").doc(certificateId).set({
           certificateId,
@@ -120,6 +137,7 @@ export async function POST(request: Request) {
           durationMinutes: session.durationMinutes,
           wordCount: session.wordCount,
           rawWpm: result.rawWpm,
+          netWpm: result.netWpm,
           accuracy: result.accuracy,
           tier: tier.id,
           tierLabel: tier.label,

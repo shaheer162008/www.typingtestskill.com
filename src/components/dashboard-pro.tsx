@@ -4,7 +4,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { ArrowLeft, ArrowRight, Award, BarChart3, CheckCircle2, Gauge, LockKeyhole, Target } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/navbar";
 import { useAuth } from "@/components/auth-provider";
 import CertificateActions from "@/components/certificate-actions";
@@ -31,7 +31,7 @@ type Result = {
   certificateId?: string | null;
 };
 
-type Certificate = { certificateId: string; name: string; rawWpm: number; accuracy: number; tierLabel?: string; issuedAt: number; categoryId?: string; durationMinutes?: number | null; wordCount?: number | null };
+type Certificate = { certificateId: string; name: string; rawWpm: number; netWpm?: number; accuracy: number; tierLabel?: string; issuedAt: number; categoryId?: string; durationMinutes?: number | null; wordCount?: number | null };
 
 function formatDuration(milliseconds?: number) {
   if (!milliseconds) return "—";
@@ -57,6 +57,18 @@ export default function DashboardPro() {
   const [certificateTab, setCertificateTab] = useState<"earned" | "locked">("earned");
   const [timeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [selectedResult, setSelectedResult] = useState<Result | null>(null);
+  const [newCertificatePopup, setNewCertificatePopup] = useState<Certificate | null>(null);
+  const previousCertCount = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (certificates.length === 0) return;
+    if (previousCertCount.current !== null && certificates.length > previousCertCount.current) {
+      setNewCertificatePopup(certificates[0]);
+      setCertificatePage(0);
+      setCertificateTab("earned");
+    }
+    previousCertCount.current = certificates.length;
+  }, [certificates]);
 
   useEffect(() => {
     if (!user) return;
@@ -69,7 +81,7 @@ export default function DashboardPro() {
   const pageSize = 5;
   const pageCount = Math.max(1, Math.ceil(visibleItems.length / pageSize));
   const pageItems = visibleItems.slice(page * pageSize, page * pageSize + pageSize);
-  const bestSpeed = results.length ? Math.max(...results.map((result) => result.rawWpm ?? result.netWpm ?? 0)) : 0;
+  const bestSpeed = results.length ? Math.max(...results.map((result) => result.netWpm ?? result.rawWpm ?? 0)) : 0;
   const bestAccuracy = results.length ? Math.max(...results.map((result) => result.accuracy ?? 0)) : 0;
   const averageNet = results.length ? Math.round(results.reduce((sum, result) => sum + (result.netWpm ?? 0), 0) / results.length) : 0;
   const certificateCount = Math.max(1, certificates.length);
@@ -91,7 +103,7 @@ export default function DashboardPro() {
     <div className="min-h-screen bg-[#080908] text-primary">
       <Navbar />
       <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-        <header className="flex flex-col justify-between gap-5 border-b border-primary/10 pb-7 sm:flex-row sm:items-end"><div><p className="text-xs uppercase tracking-[0.2em] text-primary/45">Personal dashboard</p><h1 className="mt-3 text-4xl font-medium tracking-[-0.06em] sm:text-6xl">Your typing, measured clearly.</h1><p className="mt-4 max-w-2xl text-sm leading-6 text-primary/55">Realtime results, detailed analysis, and certificates issued from your verified sessions.</p></div><Link href="/typing-test/1-minute" className="inline-flex items-center gap-2 bg-primary px-5 py-3 text-sm font-semibold text-black">Start another test <ArrowRight className="h-4 w-4" /></Link></header>
+        <header className="flex flex-col justify-between gap-5 border-b border-primary/10 pb-7 sm:flex-row sm:items-end"><div><p className="text-xs uppercase tracking-[0.2em] text-primary/45">Personal dashboard</p><h1 className="mt-3 text-4xl font-medium tracking-[-0.06em] sm:text-6xl">Your typing, measured clearly.</h1><p className="mt-4 max-w-2xl text-sm leading-6 text-primary/55">Realtime results, detailed analysis, and certificates issued from your verified sessions.</p></div><Link href="/typing-test" className="inline-flex items-center gap-2 bg-primary px-5 py-3 text-sm font-semibold text-black">Start another test <ArrowRight className="h-4 w-4" /></Link></header>
 
         <section className="grid gap-3 py-7 sm:grid-cols-2 lg:grid-cols-4" aria-label="Your performance summary">{summaryStats.map((stat) => { const Icon = stat.icon; return <article key={stat.label} className="border border-primary/15 bg-white/[0.025] p-5"><Icon className="h-5 w-5 text-primary/55" aria-hidden="true" /><p className="mt-7 text-[10px] uppercase tracking-[0.16em] text-primary/40">{stat.label}</p><p className="mt-2 text-3xl font-medium tracking-[-0.04em]">{stat.value}</p></article>; })}</section>
 
@@ -122,7 +134,7 @@ export default function DashboardPro() {
                   Earned
                 </button>
                 <button type="button" onClick={() => setCertificateTab("locked")} className={`px-3 py-2 text-xs ${certificateTab === "locked" ? "border-b-2 border-black font-semibold" : "text-black/45"}`}>
-                  How to unlock
+                  Locked certificates
                 </button>
               </div>
 
@@ -133,7 +145,7 @@ export default function DashboardPro() {
                     <h2 className="mt-2 text-3xl font-medium tracking-[-0.05em]">{visibleCertificate.name}</h2>
                     <div className="mt-4 h-px w-20 bg-black/25" />
                     <p className="mt-4 text-sm font-medium text-black/70">{visibleCertificate.tierLabel ?? "Typing certificate"}</p>
-                    <p className="mt-2 text-sm text-black/55">{visibleCertificate.rawWpm} raw WPM · {visibleCertificate.accuracy}% accuracy</p>
+                    <p className="mt-2 text-sm text-black/55">{visibleCertificate.netWpm ?? visibleCertificate.rawWpm} net WPM · {visibleCertificate.accuracy}% accuracy</p>
                     <p className="mt-2 text-xs text-black/50">{visibleCertificate.wordCount ? `${visibleCertificate.wordCount}-word test` : `${visibleCertificate.durationMinutes}-minute typing test`}</p>
                     <p className="mt-2 text-xs text-black/50">Completed {formatDateTime(visibleCertificate.issuedAt)} ({timeZone})</p>
                   </div>
@@ -150,18 +162,21 @@ export default function DashboardPro() {
                         onClick={() => setCertificatePage((current) => Math.max(0, current - 1))}
                         disabled={certificatePage === 0}
                         aria-label="Previous certificate"
-                        className="border border-black/20 px-2 py-2 text-[10px] uppercase tracking-[0.12em] text-black/70 disabled:opacity-30"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/70 transition hover:bg-black/5 disabled:opacity-30"
                       >
-                        Prev
+                        <ArrowLeft className="h-4 w-4" />
                       </button>
+                      <span className="text-xs font-semibold text-black/70">
+                        Certificate {certificates.length - certificatePage} of {certificates.length}
+                      </span>
                       <button
                         type="button"
                         onClick={() => setCertificatePage((current) => Math.min(certificates.length - 1, current + 1))}
                         disabled={certificatePage >= certificates.length - 1}
                         aria-label="Next certificate"
-                        className="border border-black/20 px-2 py-2 text-[10px] uppercase tracking-[0.12em] text-black/70 disabled:opacity-30"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/70 transition hover:bg-black/5 disabled:opacity-30"
                       >
-                        Next
+                        <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
                   )}
@@ -181,10 +196,10 @@ export default function DashboardPro() {
                   </p>
                 </div>
               ) : (
-                <div className="py-8 text-sm text-black/60">
+                <div className="py-6 text-sm text-black/60">
                   <p className="text-lg font-medium text-black">Your next certificate: {nextTier.label}</p>
                   <p className="mt-2 leading-6 text-black/60">
-                    Reach {nextTier.minWpm}+ raw WPM with at least 95% accuracy in a qualifying test.
+                    Reach {nextTier.minWpm}+ net WPM with at least <strong className="text-black">90% accuracy</strong> in a qualifying test.
                   </p>
                   <div className="mt-5 h-2 bg-black/15">
                     <div
@@ -192,8 +207,21 @@ export default function DashboardPro() {
                       style={{ width: `${Math.min(100, nextTier.minWpm ? (bestSpeed / nextTier.minWpm) * 100 : 0)}%` }}
                     />
                   </div>
-                  <p className="mt-2 text-xs text-black/50">Current best: {bestSpeed || 0} raw WPM</p>
-                  <Link href="/typing-test/1-minute" className="mt-5 inline-flex bg-black px-4 py-2 text-xs font-semibold text-primary">
+                  <p className="mt-2 text-xs text-black/50">Current best: {bestSpeed || 0} net WPM</p>
+                  
+                  <div className="mt-6 border-t border-black/15 pt-5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-black/40 mb-3">Certificate Tiers (Min 90% Accuracy)</p>
+                    <ul className="space-y-2 text-xs text-black/60">
+                      <li className="flex justify-between"><span>Beginner</span> <span className="font-semibold text-black">1 - 14 WPM</span></li>
+                      <li className="flex justify-between"><span>Intermediate</span> <span className="font-semibold text-black">15 - 24 WPM</span></li>
+                      <li className="flex justify-between"><span>Advanced</span> <span className="font-semibold text-black">25 - 34 WPM</span></li>
+                      <li className="flex justify-between"><span>Expert</span> <span className="font-semibold text-black">35 - 49 WPM</span></li>
+                      <li className="flex justify-between"><span>Master</span> <span className="font-semibold text-black">50 - 74 WPM</span></li>
+                      <li className="flex justify-between"><span>Grandmaster</span> <span className="font-semibold text-black">75+ WPM</span></li>
+                    </ul>
+                  </div>
+
+                  <Link href="/typing-test" className="mt-6 block text-center bg-black px-4 py-3 text-xs font-semibold text-primary transition hover:bg-black/80">
                     Start an eligible test
                   </Link>
                 </div>
@@ -205,15 +233,54 @@ export default function DashboardPro() {
               <p className="mt-3 text-sm leading-6 text-primary/55">
                 {certificates.length ? `${certificates.length} permanent certificate${certificates.length === 1 ? "" : "s"} issued.` : "No permanent certificates issued yet."}
               </p>
-              <Link href="/certificates" className="mt-4 inline-flex text-xs text-primary underline decoration-primary/25 underline-offset-4">
+              <Link href="/certificates" className="mt-4 inline-flex text-xs text-primary underline decoration-primary/25 underline-offset-4 hover:text-primary/80">
                 Verify certificates
               </Link>
+            </section>
+
+            <section className="border border-primary/15 p-5 bg-white/[0.015]">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-primary/40">Quick Navigation</p>
+              <div className="mt-4 flex flex-col gap-3 text-sm">
+                <Link href="/typing-test" className="flex items-center justify-between group">
+                  <span className="text-primary/70 transition group-hover:text-primary">Take a Test</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-primary/30 transition group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+                <Link href="/typing-practice" className="flex items-center justify-between group">
+                  <span className="text-primary/70 transition group-hover:text-primary">Practice Mode</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-primary/30 transition group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+                <Link href="/leaderboard" className="flex items-center justify-between group">
+                  <span className="text-primary/70 transition group-hover:text-primary">Global Leaderboard</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-primary/30 transition group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+                <Link href="/word-typing" className="flex items-center justify-between group">
+                  <span className="text-primary/70 transition group-hover:text-primary">Word Typing</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-primary/30 transition group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+              </div>
             </section>
           </aside>
         </div>
 
         {selectedResult && <section className="mt-8 border border-primary/15 bg-white/[0.02] p-5 sm:p-6" aria-labelledby="analysis-title"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[0.18em] text-primary/40">Detailed analysis</p><h2 id="analysis-title" className="mt-2 text-2xl font-medium">{resultLabel(selectedResult)}</h2></div><button type="button" onClick={() => setSelectedResult(null)} className="text-xs text-primary/55 underline underline-offset-4">Close</button></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[["Raw WPM", selectedResult.rawWpm ?? "—"], ["Net WPM", selectedResult.netWpm ?? "—"], ["CPM", selectedResult.cpm ?? "—"], ["Completion time", formatDuration(selectedResult.elapsedMs)], ["Correct words", selectedResult.correctWords ?? "—"], ["Incorrect words", selectedResult.incorrectWords ?? "—"], ["Consistency", selectedResult.consistency ? `${selectedResult.consistency}%` : "—"], ["Backspaces", selectedResult.backspaceCount ?? "—"]].map(([label, value]) => <div key={String(label)} className="border border-primary/10 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-[0.14em] text-primary/40">{label}</p><p className="mt-2 text-xl font-medium">{value}</p></div>)}</div><div className="mt-6"><p className="text-xs uppercase tracking-[0.16em] text-primary/40">Mistake breakdown</p>{selectedResult.mistakes?.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{selectedResult.mistakes.slice(0, 20).map((mistake, index) => <div key={`${mistake.index}-${index}`} className="border border-red-300/20 bg-red-300/[0.04] px-3 py-2 text-xs text-red-100">Position {mistake.index + 1}: expected “{mistake.expected || "space"}”, typed “{mistake.actual || "space"}”</div>)}</div> : <p className="mt-3 text-sm text-emerald-200">No recorded character mistakes.</p>}</div></section>}
       </main>
+
+      {newCertificatePopup && (
+        <div className="fixed bottom-6 right-6 z-50 flex max-w-sm flex-col gap-3 border border-emerald-500/30 bg-black p-5 text-emerald-50 shadow-2xl shadow-emerald-900/20">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-emerald-400" />
+              <p className="text-sm font-semibold">New Certificate Unlocked!</p>
+            </div>
+            <button type="button" onClick={() => setNewCertificatePopup(null)} className="text-primary/50 hover:text-primary">
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-xs leading-5 text-emerald-100/70">
+            Congratulations! You just unlocked the <strong className="font-semibold text-emerald-400">{newCertificatePopup.tierLabel}</strong> certificate with {newCertificatePopup.netWpm ?? newCertificatePopup.rawWpm} net WPM and {newCertificatePopup.accuracy}% accuracy.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

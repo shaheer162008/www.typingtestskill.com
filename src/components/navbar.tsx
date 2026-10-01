@@ -72,9 +72,12 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 text-primary backdrop-blur-md transition-all duration-300" role="navigation" aria-label="Main navigation">
       <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3" aria-label="Typing Test Skill Home">
-          <Image src="/icon.png" alt="" width={50} height={50} className="h-auto w-[50px]" aria-hidden="true" />
-          <span className="text-xl font-bold tracking-tight text-primary">Typing Test Skill</span>
+        <Link href="/" className="group flex items-center gap-3 rounded-lg border border-transparent py-1 pr-3 pl-1 transition-all hover:border-primary/20 hover:bg-white/[0.03]" aria-label="Typing Test Skill Home">
+          <Image src="/icon.png" alt="" width={45} height={45} className="h-auto w-[45px] transition-transform group-hover:scale-105" aria-hidden="true" />
+          <div className="flex flex-col justify-center">
+            <span className="text-[17px] font-bold tracking-tight text-primary transition-colors group-hover:text-primary/90">Typing Test Skill</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-primary/40 transition-colors group-hover:text-primary/80">Home</span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}

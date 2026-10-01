@@ -117,7 +117,7 @@ export default function LeaderboardPreview() {
                     )}
                     <span className="truncate text-sm font-medium text-primary">{entry.name}</span>
                   </div>
-                  <span className="text-right text-sm font-medium text-primary sm:text-left">{entry.rawWpm} <span className="text-xs text-primary/40">WPM</span></span>
+                  <span className="text-right text-sm font-medium text-primary sm:text-left">{entry.netWpm ?? entry.rawWpm} <span className="text-xs text-primary/40">WPM</span></span>
                   <span className="hidden text-sm text-primary/65 sm:block">{entry.accuracy}%</span>
                 </motion.div>
               ))

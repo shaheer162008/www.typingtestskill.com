@@ -25,8 +25,8 @@ export async function POST(request: Request) {
     const nonce = randomBytes(24).toString("hex");
     let targetText = getTargetText(mode, durationMinutes, wordCount, difficulty);
     if (body.lessonId) {
-      const lessonSnapshot = await getAdminDb().collection("categories").doc(mode === "words" ? `words-${wordCount}` : `${mode === "practice" ? "practice" : "timed"}-${durationMinutes}-minute`).collection("lessons").doc(body.lessonId).get();
-      if (lessonSnapshot.exists && lessonSnapshot.data()?.enabled === true) targetText = String(lessonSnapshot.data()?.text ?? targetText);
+      const lessonSnapshot = await getAdminDb().collection("lessons").doc(body.lessonId).get();
+      if (lessonSnapshot.exists) targetText = String(lessonSnapshot.data()?.text ?? targetText);
     }
     const createdAt = Date.now();
     await getAdminDb().collection("testSessions").doc(sessionId).set({

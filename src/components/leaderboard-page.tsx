@@ -121,7 +121,7 @@ export default function LeaderboardPageClient() {
                       )}
                       <span className="truncate font-medium">{entry.name}</span>
                     </div>
-                    <span className="text-sm font-medium sm:text-left">{entry.rawWpm} <span className="text-xs text-primary/40">WPM</span></span>
+                    <span className="text-sm font-medium sm:text-left">{entry.netWpm ?? entry.rawWpm} <span className="text-xs text-primary/40">WPM</span></span>
                     <span className="hidden text-sm text-primary/65 sm:block">{entry.accuracy}%</span>
                     <span className="hidden text-xs text-primary/45 capitalize sm:block">{entry.difficulty ?? "—"}</span>
                   </div>

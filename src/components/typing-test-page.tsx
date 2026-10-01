@@ -144,9 +144,60 @@ export default function TypingTestPage({ mode, durationMinutes, wordCount, lesso
     inputRef.current?.focus();
   };
 
-  const correctChars = useMemo(() => typed.split("").filter((char, index) => char === targetText[index]).length, [targetText, typed]);
+  const { charStatuses, currentCursorIndex, lockedTargetIndex, correctChars } = useMemo(() => {
+    const statuses = new Array(targetText.length).fill("untyped");
+    const typedWords = typed.split(" ");
+    const targetWords = targetText.split(" ");
+    let targetCharIndex = 0;
+    let correct = 0;
+    let locked = 0;
+
+    for (let i = 0; i < typedWords.length; i++) {
+      const typedWord = typedWords[i];
+      const targetWord = targetWords[i];
+      if (targetWord === undefined) break;
+
+      const maxLength = Math.max(typedWord.length, targetWord.length);
+      for (let j = 0; j < maxLength; j++) {
+        if (j < typedWord.length && typedWord[j] === targetWord[j]) correct++;
+        
+        if (j < targetWord.length) {
+          if (j < typedWord.length) {
+            statuses[targetCharIndex + j] = typedWord[j] === targetWord[j] ? "correct" : "wrong";
+          } else {
+            statuses[targetCharIndex + j] = (i < typedWords.length - 1) ? "wrong" : "untyped";
+          }
+        }
+      }
+      
+      targetCharIndex += targetWord.length;
+      if (targetCharIndex < targetText.length) {
+        if (i < typedWords.length - 1) {
+           statuses[targetCharIndex] = "correct";
+           correct++;
+        }
+        targetCharIndex++;
+      }
+      
+      if (i < typedWords.length - 1) {
+        locked += targetWord.length + 1;
+      }
+    }
+    
+    let exactCursor = 0;
+    for (let i = 0; i < typedWords.length - 1; i++) exactCursor += (targetWords[i]?.length ?? 0) + 1;
+    exactCursor += typedWords[typedWords.length - 1].length;
+
+    return { 
+      charStatuses: statuses, 
+      currentCursorIndex: Math.min(exactCursor, targetText.length), 
+      lockedTargetIndex: locked,
+      correctChars: correct
+    };
+  }, [typed, targetText]);
+
   const mistakes = Math.max(0, typed.length - correctChars);
-  const accuracy = typed.length === 0 ? 100 : Math.max(0, Math.round((correctChars / typed.length) * 100));
+  const accuracy = typed.length === 0 ? 100 : Math.max(0, Math.round((correctChars / Math.max(1, typed.length)) * 100));
   const wpm = getWpm(correctChars, elapsedMs);
   const displayedTime = timeLimitMs ? Math.ceil(Math.max(0, timeLimitMs - elapsedMs) / 1000) : Math.floor(elapsedMs / 1000);
   const stats = [
@@ -362,11 +413,11 @@ export default function TypingTestPage({ mode, durationMinutes, wordCount, lesso
                   className="min-h-0 flex-1 overflow-hidden text-[18px] font-medium leading-[34px] text-primary/50 sm:text-[19px] sm:leading-[34px]"
                 >
                   {targetText.split("").map((char, index) => {
-                    const typedChar = typed[index];
-                    const isCurrent = index === typed.length && !completed;
-                    const isLocked = index < lockBoundary;
-                    const isCorrect = typedChar !== undefined && typedChar === char;
-                    const isWrong = typedChar !== undefined && typedChar !== char;
+                    const status = charStatuses[index];
+                    const isCurrent = index === currentCursorIndex && !completed;
+                    const isLocked = index < lockedTargetIndex;
+                    const isCorrect = status === "correct";
+                    const isWrong = status === "wrong";
 
                     // Untyped text stays clearly legible (no more low-opacity haze), correct
                     // text turns solid white, and mistakes get both a red fill AND an

@@ -1,5 +1,5 @@
 export type CertificateTier = {
-  id: "beginner" | "intermediate" | "advanced" | "expert" | "master";
+  id: "beginner" | "intermediate" | "advanced" | "expert" | "master" | "grandmaster";
   label: string;
   minWpm: number;
   maxWpm: number | null;
@@ -7,11 +7,12 @@ export type CertificateTier = {
 };
 
 export const certificateTiers: CertificateTier[] = [
-  { id: "master", label: "Master", minWpm: 90, maxWpm: null, description: "Elite speed. Certificate proves it." },
-  { id: "expert", label: "Expert", minWpm: 71, maxWpm: 89, description: "Top tier. Consistency is your advantage." },
-  { id: "advanced", label: "Advanced", minWpm: 51, maxWpm: 70, description: "Solid technique. Ready for certification." },
-  { id: "intermediate", label: "Intermediate", minWpm: 31, maxWpm: 50, description: "Building speed. Daily practice pays off." },
-  { id: "beginner", label: "Beginner", minWpm: 0, maxWpm: 30, description: "Just starting out. Focus on accuracy first." },
+  { id: "grandmaster", label: "Grandmaster", minWpm: 75, maxWpm: null, description: "Elite speed. Unmatched precision." },
+  { id: "master", label: "Master", minWpm: 50, maxWpm: 74, description: "Top tier. Consistency is your advantage." },
+  { id: "expert", label: "Expert", minWpm: 35, maxWpm: 49, description: "Solid technique. Ready for certification." },
+  { id: "advanced", label: "Advanced", minWpm: 25, maxWpm: 34, description: "Building speed. Daily practice pays off." },
+  { id: "intermediate", label: "Intermediate", minWpm: 15, maxWpm: 24, description: "Focus on accuracy first, speed later." },
+  { id: "beginner", label: "Beginner", minWpm: 0, maxWpm: 14, description: "Just starting out. Building the foundation." },
 ];
 
 export function getCertificateTier(rawWpm: number) {
